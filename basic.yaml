@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+  - variables
+#packages
+#- docker
+#ports
+# - "80/tcp"
+  tasks:
+    - name: firewall status
+      service: name=firewalld state=started enabled=yes   # started restared stopped  enabled yes no
+
+    - name: Allow http/https
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      with_items:
+      - "8082/tcp"
+     
+    - name: packages installation
+      yum: 
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items: "{{ packages }}"
+      
+    - name: yum
+      yum:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      with_items:
+      - docker
+      - tre
+
+    - name: services and enable
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      with_items: "{{ services }}"
+
+    - name: Ports in Firewalld
+      firewalld:
+        port: "{{ item }}"
+        state: enabled
+        permanent: yes
+        immediate: yes
+        with_items: "{{ ports }}"     
